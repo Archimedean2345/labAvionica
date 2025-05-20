@@ -1,3 +1,4 @@
+# Codigo actualizado
 import serial
 import pynmea2
 import smbus
