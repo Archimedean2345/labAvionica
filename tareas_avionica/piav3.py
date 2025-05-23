@@ -100,26 +100,29 @@ while time.time() - t0 < 30:
     P = A @ P @ A.T + Q
 
     gps_x, gps_y = None, None
+    lat, lon = None, None
 
     try:
-        line = gps.readline().decode(errors='ignore').strip()
-        lat, lon = parse_latlon(line)
-
-        if lat and lon:
-            if lat0 is None:
-                lat0, lon0 = lat, lon
-            gps_x, gps_y = latlon_to_xy(lat, lon, lat0, lon0)
-            z = np.array([[gps_x], [gps_y]])
-
-            # Corrección
-            y_k = z - H @ x_k
-            S = H @ P @ H.T + R
-            K = P @ H.T @ np.linalg.inv(S)
-            x_k = x_k + K @ y_k
-            P = (np.eye(4) - K @ H) @ P
-
+        if gps.in_waiting:
+            raw = gps.readline()
+            line = raw.decode(errors='ignore').strip()
+            lat, lon = parse_latlon(line)
     except Exception as e:
         print("Error GPS:", e)
+        lat, lon = None, None
+
+    if lat and lon:
+        if lat0 is None:
+            lat0, lon0 = lat, lon
+        gps_x, gps_y = latlon_to_xy(lat, lon, lat0, lon0)
+        z = np.array([[gps_x], [gps_y]])
+
+        # Corrección
+        y_k = z - H @ x_k
+        S = H @ P @ H.T + R
+        K = P @ H.T @ np.linalg.inv(S)
+        x_k = x_k + K @ y_k
+        P = (np.eye(4) - K @ H) @ P
 
     # Guardar datos
     data.append([time.time()-t0, x_k[0,0], x_k[1,0], acc_x, acc_y, gps_x, gps_y])
@@ -148,7 +151,7 @@ plt.plot(x_kalman, y_kalman, label="Estimación Kalman", linewidth=2)
 plt.scatter(x_gps, y_gps, color='red', label="GPS", alpha=0.7)
 plt.xlabel("X (m)")
 plt.ylabel("Y (m)")
-plt.title("Trayectoria: GPS + IMU (Kalman)")
+plt.title("Trayectoria estimada: Fusión GPS + IMU (Kalman)")
 plt.grid(True)
 plt.legend()
 plt.axis("equal")
