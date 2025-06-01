@@ -153,5 +153,5 @@ def main():
         print("Todos los datos fueron guardados correctamente.")
     except KeyboardInterrupt:
         print("\nPrograma detenido por el usuario")
-if _name_ == "_main_":
+if _name_ == "__main__":
     main()
